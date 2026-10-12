@@ -1,0 +1,41 @@
+import type { Question } from "@/types"
+export const mockQuestions: Question[] = [
+  {id:"q1", examId:"e1", order:1, type:"mcq", text:"What is the derivative of sin(x)?", options:["cos(x)","-cos(x)","sin(x)","-sin(x)"], correctAnswer:"cos(x)", points:2, required:true},
+  {id:"q2", examId:"e1", order:2, type:"mcq", text:"Which of the following is a vector space axiom?", options:["Commutativity","Associativity","Closure under addition","All of the above"], correctAnswer:"All of the above", points:2, required:true},
+  {id:"q3", examId:"e1", order:3, type:"tf", text:"The determinant of an identity matrix is 0.", options:["True","False"], correctAnswer:"False", points:1, required:true},
+  {id:"q4", examId:"e1", order:4, type:"mcq", text:"Expected value of a fair dice roll is:", options:["3","3.5","4","2.5"], correctAnswer:"3.5", points:2, required:true},
+  {id:"q5", examId:"e1", order:5, type:"short", text:"Explain the Central Limit Theorem in 2–3 sentences.", options:undefined, correctAnswer:"Sample mean approaches normal distribution as n grows", points:5, required:true},
+  {id:"q6", examId:"e1", order:6, type:"mcq", text:"Eigenvalues of a diagonal matrix are:", options:["Diagonal entries","Zeros","Ones","Cannot determine"], correctAnswer:"Diagonal entries", points:2, required:true},
+  {id:"q7", examId:"e1", order:7, type:"mcq", text:"∫0 to 1 x² dx =", options:["1/2","1/3","1/4","1"], correctAnswer:"1/3", points:2, required:true},
+  {id:"q8", examId:"e1", order:8, type:"tf", text:"A p-value of 0.03 means null hypothesis is true with 3% probability.", options:["True","False"], correctAnswer:"False", points:1, required:true},
+  {id:"q9", examId:"e1", order:9, type:"mcq", text:"Rank of matrix [[1,2],[2,4]] is:", options:["0","1","2","Undefined"], correctAnswer:"1", points:2, required:true},
+  {id:"q10", examId:"e1", order:10, type:"short", text:"Define Type I and Type II errors with one example each.", options:undefined, correctAnswer:"Type I false positive, Type II false negative", points:5, required:true},
+  {id:"q15", examId:"e1", order:11, type:"mcq", text:"If A and B are independent with P(A)=0.4, P(B)=0.5, then P(A∩B) is:", options:["0.2","0.9","0.1","0.45"], correctAnswer:"0.2", points:2, required:true},
+  {id:"q16", examId:"e1", order:12, type:"mcq", text:"Which distribution models number of successes in n trials?", options:["Poisson","Binomial","Normal","Exponential"], correctAnswer:"Binomial", points:2, required:true},
+  {id:"q17", examId:"e1", order:13, type:"tf", text:"Every continuous function is differentiable.", options:["True","False"], correctAnswer:"False", points:1, required:true},
+  {id:"q18", examId:"e1", order:14, type:"mcq", text:"Mean of Poisson(λ) is:", options:["λ","λ²","√λ","1/λ"], correctAnswer:"λ", points:2, required:true},
+  {id:"q19", examId:"e1", order:15, type:"short", text:"State Bayes' theorem and give one application.", options:undefined, correctAnswer:"P(A|B)=P(B|A)P(A)/P(B)", points:5, required:true},
+  {id:"q20", examId:"e1", order:16, type:"mcq", text:"Gradient of f(x,y)=x²+y² at (1,1) is:", options:["(1,1)","(2,2)","(0,0)","(2,0)"], correctAnswer:"(2,2)", points:2, required:true},
+  {id:"q21", examId:"e1", order:17, type:"mcq", text:"Which is orthogonal matrix property?", options:["QᵀQ=I","det=0","Symmetric","Eigenvalues 0"], correctAnswer:"QᵀQ=I", points:2, required:true},
+  {id:"q22", examId:"e1", order:18, type:"tf", text:"Variance of constant is zero.", options:["True","False"], correctAnswer:"True", points:1, required:true},
+  {id:"q23", examId:"e1", order:19, type:"mcq", text:"Limit of (1+1/n)ⁿ as n→∞ is:", options:["0","1","e","∞"], correctAnswer:"e", points:2, required:true},
+  {id:"q24", examId:"e1", order:20, type:"mcq", text:"Correlation coefficient range is:", options:["0 to 1","-1 to 1","-∞ to ∞","0 to ∞"], correctAnswer:"-1 to 1", points:2, required:true},
+  {id:"q25", examId:"e1", order:21, type:"short", text:"Explain the difference between population and sample with an example.", options:undefined, correctAnswer:"Population is whole set, sample is subset", points:5, required:true},
+  {id:"q26", examId:"e1", order:22, type:"mcq", text:"Trace of a matrix is:", options:["Sum of diagonal elements","Sum of eigenvalues","Both","None"], correctAnswer:"Both", points:2, required:true},
+  {id:"q27", examId:"e1", order:23, type:"mcq", text:"If X~N(0,1), P(X>0) is:", options:["0.25","0.5","0.75","1"], correctAnswer:"0.5", points:2, required:true},
+  {id:"q28", examId:"e1", order:24, type:"tf", text:"A symmetric matrix is always diagonalizable.", options:["True","False"], correctAnswer:"True", points:1, required:true},
+  {id:"q29", examId:"e1", order:25, type:"mcq", text:"Jacobian determinant is used for:", options:["Change of variables","Differentiation","Integration by parts","None"], correctAnswer:"Change of variables", points:2, required:true},
+  {id:"q30", examId:"e1", order:26, type:"mcq", text:"Standard deviation is:", options:["√variance","variance²","mean","median"], correctAnswer:"√variance", points:2, required:true},
+  {id:"q31", examId:"e1", order:27, type:"mcq", text:"Which test compares means of two groups?", options:["t-test","Chi-square","ANOVA","Mann-Whitney"], correctAnswer:"t-test", points:2, required:true},
+  {id:"q32", examId:"e1", order:28, type:"tf", text:"Null hypothesis is assumed true until evidence suggests otherwise.", options:["True","False"], correctAnswer:"True", points:1, required:true},
+  {id:"q33", examId:"e1", order:29, type:"mcq", text:"Double integral of 1 over [0,1]×[0,1] is:", options:["0","1","2","0.5"], correctAnswer:"1", points:2, required:true},
+  {id:"q34", examId:"e1", order:30, type:"short", text:"Briefly describe how to test if a coin is fair using hypothesis testing.", options:undefined, correctAnswer:"Set H0 p=0.5, collect data, compute test statistic and p-value", points:5, required:true},
+  // e2 physics
+  {id:"q11", examId:"e2", order:1, type:"mcq", text:"Newton's second law:", options:["F=ma","F=mv","E=mc²","P=IV"], correctAnswer:"F=ma", points:2, required:true},
+  {id:"q12", examId:"e2", order:2, type:"tf", text:"Entropy of isolated system can decrease.", options:["True","False"], correctAnswer:"False", points:1, required:true},
+  // e3
+  {id:"q13", examId:"e3", order:1, type:"mcq", text:"Time complexity of binary search:", options:["O(n)","O(log n)","O(n log n)","O(1)"], correctAnswer:"O(log n)", points:2, required:true},
+  {id:"q14", examId:"e5", order:1, type:"mcq", text:"Inorder traversal of BST yields:", options:["Sorted order","Reverse order","Random","Level order"], correctAnswer:"Sorted order", points:2, required:true},
+]
+
+export const getQuestionsByExam = (examId:string)=> mockQuestions.filter(q=>q.examId===examId).sort((a,b)=>a.order-b.order)

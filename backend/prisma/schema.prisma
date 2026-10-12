@@ -1,0 +1,559 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  TEACHER
+  STUDENT
+  ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+enum ExamStatus {
+  DRAFT
+  SCHEDULED
+  LIVE
+  COMPLETED
+  PUBLISHED
+  UNPUBLISHED
+  ARCHIVED
+}
+
+enum QuestionType {
+  MCQ
+  TF
+  SHORT
+  TRUE_FALSE
+  SHORT_ANSWER
+  LONG_ANSWER
+}
+
+enum SessionStatus {
+  IN_PROGRESS
+  SUBMITTED
+  EXPIRED
+}
+
+enum EventType {
+  TAB_HIDDEN
+  TAB_VISIBLE
+  WINDOW_BLUR
+  WINDOW_FOCUS
+  QUESTION_OPENED
+  QUESTION_ANSWERED
+  ANSWER_CHANGED
+  RAPID_ANSWER
+  UNUSUAL_TIME_SPENT
+  COPY
+  PASTE
+  SESSION_STARTED
+  SESSION_ENDED
+  SESSION_HEARTBEAT
+  SUBMITTED
+  FULLSCREEN_ENTERED
+  FULLSCREEN_EXITED
+  CONNECTION_LOST
+  CONNECTION_RESTORED
+  HEARTBEAT_GAP
+}
+
+enum ReviewStatus {
+  PENDING
+  IN_REVIEW
+  REVIEWED
+  REQUIRES_FOLLOW_UP
+  DISMISSED
+}
+
+enum ReviewLevel {
+  NORMAL
+  LOW_CONCERN
+  REQUIRES_REVIEW
+  HIGH_PRIORITY_REVIEW
+}
+
+enum SignalType {
+  TAB_SWITCH
+  TIMING
+  RAPID_CHANGE
+  COPY_PASTE
+  SIMILARITY
+  SUBJECTIVE_SIMILARITY
+  MULTI_SESSION
+  CORRELATED_PATTERN
+  SESSION_ANOMALY
+  UNACCOUNTED_TIME_GAP
+  FULLSCREEN
+  CONNECTION_ANOMALY
+}
+
+enum SignalSeverity {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum AuditAction {
+  EXAM_CREATED
+  EXAM_UPDATED
+  EXAM_PUBLISHED
+  EXAM_UNPUBLISHED
+  QUESTION_CREATED
+  QUESTION_UPDATED
+  QUESTION_DELETED
+  REVIEW_OPENED
+  REVIEW_STATUS_CHANGED
+  REVIEW_NOTE_ADDED
+  REVIEW_NOTE_UPDATED
+  REVIEW_ASSIGNED
+  REPORT_GENERATED
+  REPORT_DOWNLOADED
+  STUDENT_RESULT_VIEWED
+  PDF_DOWNLOADED
+  LOGIN
+  LOGOUT
+  EXAM_STARTED
+  EXAM_SUBMITTED
+  SESSION_EXPIRED
+  EXAM_ARCHIVED
+  QUESTION_REORDERED
+  HEARTBEAT_RECEIVED
+  ANNOUNCEMENT_SENT
+  CLARIFICATION_CREATED
+  CLARIFICATION_RESPONDED
+  GRADE_UPDATED
+  LIVE_VIEWED
+}
+
+enum ReportType {
+  RESULT
+  INTEGRITY
+  EXAM_ANALYTICS
+}
+
+model User {
+  id           String     @id @default(cuid())
+  name         String
+  fullName     String?    // alias for name, for 3NF demonstration
+  email        String     @unique
+  passwordHash String
+  role         Role
+  status       UserStatus @default(ACTIVE)
+  studentId    String?    @unique // e.g., CS21-042 for students
+  className    String?    // e.g., "10-A"
+  section      String?
+  academicYear String?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  deletedAt    DateTime?
+
+  examsCreated    Exam[]       @relation("TeacherExams")
+  sessions        ExamSession[]
+  reviewNotes     ReviewNote[]
+  reviewsReviewed IntegrityReview[] @relation("ReviewedBy")
+  assignedReviews IntegrityReview[] @relation("AssignedReviews")
+  notifications   Notification[]
+  auditLogs       AuditLog[]   @relation("ActorAuditLogs")
+  reportsGenerated Report[]    @relation("ReportGenerator")
+  clarifications  Clarification[]
+  broadcasts      Broadcast[]  @relation("TeacherBroadcasts")
+
+  @@index([email])
+  @@index([role])
+  @@index([status])
+  @@index([studentId])
+  @@index([className, section])
+}
+
+model Exam {
+  id              String     @id @default(cuid())
+  title           String     
+  description     String     
+  subject         String     
+  className       String?    
+  section         String?    
+  academicYear    String?    
+  teacherId       String
+  teacher         User       @relation("TeacherExams", fields: [teacherId], references: [id], onDelete: Restrict)
+  status          ExamStatus @default(DRAFT)
+  durationMinutes Int        
+  totalMarks      Int        @default(0) 
+  passingMarks    Int        @default(0) 
+  startAt         DateTime?  
+  endAt           DateTime?  
+  attemptsAllowed Int        @default(1) 
+  instructions    String?    
+  publishedAt     DateTime?  
+  createdAt       DateTime   @default(now()) 
+  updatedAt       DateTime   @updatedAt 
+  deletedAt       DateTime?  
+  version         Int        @default(1) 
+
+  questions Question[]
+  sessions  ExamSession[]
+  eligibilities ExamEligibility[]
+  reports   Report[]
+  broadcasts Broadcast[]
+
+  @@index([teacherId])
+  @@index([status])
+  @@index([startAt])
+  @@index([endAt])
+  @@index([subject])
+  @@index([teacherId, status])
+  @@index([className, section])
+  @@index([publishedAt])
+  @@index([status, startAt])
+  @@index([teacherId, status, startAt])
+
+  @@map("exam")
+}
+
+model ExamEligibility {
+  id           String   @id @default(cuid())
+  examId       String
+  exam         Exam     @relation(fields: [examId], references: [id], onDelete: Cascade)
+  className    String   
+  section      String?  
+  academicYear String?  
+  createdAt    DateTime @default(now())
+
+  @@unique([examId, className, section])
+  @@index([examId])
+  @@index([className, section])
+}
+
+model Question {
+  id            String       @id @default(cuid())
+  examId        String
+  exam          Exam         @relation(fields: [examId], references: [id], onDelete: Cascade)
+  type          QuestionType
+  text          String       
+  order         Int          
+  points        Int          
+  required      Boolean      @default(true)
+  options       String?      // JSON stringified array (legacy, kept for backward compat)
+  correctAnswer String       
+  createdAt     DateTime     @default(now()) 
+  updatedAt     DateTime     @updatedAt 
+  deletedAt     DateTime?    
+  version       Int          @default(1) 
+
+  answers Answer[]
+  questionOptions QuestionOption[]
+  events  ExamEvent[]
+
+  @@unique([examId, order])
+  @@index([examId])
+  @@index([type])
+  @@index([deletedAt])
+  @@index([examId, type])
+  @@map("question")
+}
+
+model QuestionOption {
+  id         String   @id @default(cuid())
+  questionId String
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  optionText String   
+  optionOrder Int
+  isCorrect  Boolean  @default(false)
+  createdAt  DateTime @default(now()) 
+
+  answers Answer[]
+
+  @@unique([questionId, optionOrder])
+  @@index([questionId])
+  @@index([isCorrect])
+}
+
+model ExamSession {
+  id             String        @id @default(cuid())
+  examId         String
+  exam           Exam          @relation(fields: [examId], references: [id], onDelete: Cascade)
+  studentId      String
+  student        User          @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  startedAt      DateTime      @default(now()) 
+  deadlineAt     DateTime?     
+  submittedAt    DateTime?     
+  status         SessionStatus @default(IN_PROGRESS)
+  lastActivityAt DateTime      @default(now()) 
+  lastSeenAt     DateTime?     
+  heartbeatCount Int           @default(0)
+  currentQuestionId String?    
+  connectionState String?       @default("ACTIVE")
+  fullscreenExits Int          @default(0)
+  markedQuestions String?      
+  announcements  Broadcast[]
+  clarifications Clarification[]
+  createdAt      DateTime      @default(now()) 
+  updatedAt      DateTime      @updatedAt 
+  version        Int           @default(1)
+
+  answers        Answer[]
+  events         ExamEvent[]
+  integrityReview IntegrityReview?
+  reports        Report[]
+
+  @@unique([examId, studentId, status], name: "unique_active_session")
+  @@index([examId])
+  @@index([studentId])
+  @@index([status])
+  @@index([deadlineAt])
+  @@index([studentId, examId, status])
+  @@index([examId, status])
+  @@index([submittedAt])
+  @@index([lastSeenAt])
+  @@index([connectionState])
+}
+
+model Answer {
+  id              String   @id @default(cuid())
+  sessionId       String
+  session         ExamSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  questionId      String
+  question        Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  selectedOptionId String?
+  selectedOption   QuestionOption? @relation(fields: [selectedOptionId], references: [id], onDelete: SetNull)
+  answer          String   
+  isCorrect       Boolean?
+  marksAwarded    Int?     @default(0)
+  teacherFeedback String?  
+  gradedBy        String?  
+  gradedAt        DateTime? 
+  markedForReview Boolean  @default(false)
+  firstAnsweredAt DateTime @default(now()) 
+  answeredAt      DateTime? 
+  lastChangedAt   DateTime @updatedAt 
+  changeCount     Int      @default(0)
+  version         Int      @default(1)
+  createdAt       DateTime @default(now()) 
+  updatedAt       DateTime @updatedAt 
+
+  @@unique([sessionId, questionId])
+  @@index([sessionId])
+  @@index([questionId])
+  @@index([sessionId, questionId])
+  @@index([isCorrect])
+  @@index([markedForReview])
+  @@index([gradedBy])
+}
+
+model ExamEvent {
+  id         String    @id @default(cuid())
+  sessionId  String
+  session    ExamSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  questionId String?
+  question   Question? @relation(fields: [questionId], references: [id], onDelete: SetNull)
+  eventType  EventType
+  timestamp  DateTime  @default(now()) 
+  metadata   String?    // JSON stringified, only exam-related
+  createdAt  DateTime  @default(now()) 
+
+  @@index([sessionId])
+  @@index([eventType])
+  @@index([timestamp])
+  @@index([createdAt])
+  @@index([sessionId, eventType])
+  @@index([sessionId, createdAt])
+}
+
+model IntegrityReview {
+  id                  String       @id @default(cuid())
+  sessionId           String       @unique
+  session             ExamSession  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  studentId           String?
+  examId              String?
+  score               Int
+  originalScore       Int?
+  overrideScore       Int?
+  overrideReason      String?      
+  overriddenBy        String?
+  overriddenAt        DateTime?    
+  level               ReviewLevel
+  category            String?      
+  status              ReviewStatus @default(PENDING)
+  generatedAt         DateTime     @default(now()) 
+  reviewedAt          DateTime?    
+  reviewedBy          String?
+  reviewer            User?        @relation("ReviewedBy", fields: [reviewedBy], references: [id], onDelete: SetNull)
+  assignedReviewerId  String?
+  assignedReviewer    User?        @relation("AssignedReviews", fields: [assignedReviewerId], references: [id], onDelete: SetNull)
+  assignedAt          DateTime?    
+  createdAt           DateTime     @default(now()) 
+  updatedAt           DateTime     @updatedAt 
+  version             Int          @default(1)
+
+  signals IntegritySignal[]
+  notes   ReviewNote[]
+  reports Report[]
+  clarifications Clarification[]
+
+  @@index([score])
+  @@index([status])
+  @@index([level])
+  @@index([generatedAt])
+  @@index([createdAt])
+  @@index([assignedReviewerId])
+  @@index([examId])
+  @@index([studentId])
+  @@index([status, score])
+  @@index([examId, status])
+}
+
+model IntegritySignal {
+  id                String        @id @default(cuid())
+  integrityReviewId String
+  review            IntegrityReview @relation(fields: [integrityReviewId], references: [id], onDelete: Cascade)
+  type              SignalType
+  severity          SignalSeverity
+  points            Int
+  confidence        Float         @default(0.85)
+  scoreContribution Int?
+  summary           String?       
+  description       String        
+  evidence          String         // JSON stringified array/object
+  metadata          String?        // JSON stringified, exam-related only
+  createdAt         DateTime      @default(now()) 
+
+  @@index([integrityReviewId])
+  @@index([type])
+  @@index([severity])
+  @@index([type, severity])
+}
+
+model ReviewNote {
+  id                String          @id @default(cuid())
+  integrityReviewId String
+  review            IntegrityReview @relation(fields: [integrityReviewId], references: [id], onDelete: Cascade)
+  teacherId         String
+  teacher           User            @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  note              String          
+  content           String?          // alias for note
+  createdAt         DateTime        @default(now()) 
+  updatedAt         DateTime        @updatedAt 
+
+  @@index([integrityReviewId])
+  @@index([teacherId])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String   
+  message   String   
+  read      Boolean  @default(false)
+  readAt    DateTime? 
+  type      String?   // e.g., TEST_PUBLISHED, REVIEW_CREATED, etc.
+  entityId  String?  
+  createdAt DateTime @default(now()) 
+
+  @@index([userId])
+  @@index([read])
+  @@index([readAt])
+  @@index([createdAt])
+  @@index([userId, readAt])
+  @@index([userId, read])
+  @@index([type])
+}
+
+model AuditLog {
+  id        String      @id @default(cuid())
+  actorId   String?
+  actor     User?       @relation("ActorAuditLogs", fields: [actorId], references: [id], onDelete: SetNull)
+  actorRole String      
+  action    AuditAction
+  entityType String     
+  entityId  String      
+  metadata  String?      // JSON stringified
+  ipAddress String?     
+  createdAt DateTime    @default(now()) 
+
+  @@index([actorId])
+  @@index([action])
+  @@index([entityType])
+  @@index([entityId])
+  @@index([createdAt])
+  @@index([actorId, createdAt])
+  @@index([action, entityType])
+}
+
+model Report {
+  id            String     @id @default(cuid())
+  reportId      String     @unique  // EG-2026-000124
+  sessionId     String?
+  session       ExamSession? @relation(fields: [sessionId], references: [id], onDelete: SetNull)
+  reviewId      String?
+  review        IntegrityReview? @relation(fields: [reviewId], references: [id], onDelete: SetNull)
+  examId        String?
+  exam          Exam?      @relation(fields: [examId], references: [id], onDelete: SetNull)
+  reportType    ReportType
+  generatedBy   String?
+  generator     User?      @relation("ReportGenerator", fields: [generatedBy], references: [id], onDelete: SetNull)
+  generatedAt   DateTime   @default(now()) 
+  fileReference String?    
+  metadata      String?    
+  createdAt     DateTime   @default(now()) 
+
+  @@index([reportId])
+  @@index([sessionId])
+  @@index([reviewId])
+  @@index([examId])
+  @@index([reportType])
+  @@index([generatedBy])
+  @@index([generatedAt])
+  @@index([reportType, generatedAt])
+}
+
+model Clarification {
+  id                String          @id @default(cuid())
+  integrityReviewId String
+  review            IntegrityReview @relation(fields: [integrityReviewId], references: [id], onDelete: Cascade)
+  sessionId         String
+  session           ExamSession     @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  studentId         String
+  student           User            @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  message           String          
+  response          String?         
+  respondedBy       String?         
+  respondedAt       DateTime?       
+  status            String          @default("PENDING") 
+  createdAt         DateTime        @default(now()) 
+  updatedAt         DateTime        @updatedAt 
+
+  @@index([integrityReviewId])
+  @@index([sessionId])
+  @@index([studentId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model Broadcast {
+  id        String   @id @default(cuid())
+  examId    String
+  exam      Exam     @relation(fields: [examId], references: [id], onDelete: Cascade)
+  sessionId String?
+  session   ExamSession? @relation(fields: [sessionId], references: [id], onDelete: SetNull)
+  teacherId String
+  teacher   User     @relation("TeacherBroadcasts", fields: [teacherId], references: [id], onDelete: Cascade)
+  message   String   
+  target    String   @default("ALL")  // ALL or SINGLE
+  createdAt DateTime @default(now()) 
+
+  @@index([examId])
+  @@index([sessionId])
+  @@index([teacherId])
+  @@index([createdAt])
+}
+

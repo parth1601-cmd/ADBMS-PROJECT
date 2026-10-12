@@ -1,0 +1,128 @@
+import { useEffect, useState } from "react"
+import { useParams, Link } from "react-router-dom"
+import { api } from "@/services/api"
+import { Logo } from "@/components/brand/Logo"
+import { Card } from "@/components/ui/Card"
+import { Badge } from "@/components/ui/Badge"
+import { Alert } from "@/components/ui/Alert"
+import { CheckCircle2, XCircle, Shield, FileText } from "lucide-react"
+
+export default function VerifyReport() {
+  const { reportId } = useParams()
+  const [data, setData] = useState<any>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    if (!reportId) return
+    setLoading(true)
+    api.get(`/verify/report/${reportId}`)
+      .then((res: any) => {
+        // backend may wrap in {success,data}
+        const d = res?.data || res
+        setData(d)
+      })
+      .catch((e: any) => setError(e.message || "Verification failed"))
+      .finally(() => setLoading(false))
+  }, [reportId])
+
+  return (
+    <div className="min-h-screen bg-[#f8fafc] flex flex-col">
+      <header className="h-[56px] bg-white border-b border-slate-200 flex items-center px-6">
+        <Link to="/" className="flex items-center gap-2.5">
+          <Logo size={28} />
+          <span className="font-semibold tracking-tight text-slate-900">ExamGuard</span>
+          <span className="text-[11px] tracking-widest uppercase text-slate-500 ml-2">Secure Assessments. Fair Futures.</span>
+        </Link>
+      </header>
+      <main className="flex-1 flex items-center justify-center p-6">
+        <div className="w-full max-w-[520px]">
+          <Card className="p-8 text-center">
+            <div className="flex justify-center">
+              <div className="h-12 w-12 rounded-xl bg-slate-900 grid place-items-center">
+                <Shield className="h-6 w-6 text-white" />
+              </div>
+            </div>
+            <h1 className="text-[20px] font-bold tracking-tight text-slate-900 mt-4">Report Verification</h1>
+            <p className="text-[13px] text-slate-500 mt-1">Verify the authenticity of an ExamGuard report</p>
+
+            <div className="mt-6 rounded-xl bg-slate-50 border border-slate-200 p-3">
+              <div className="text-xs tracking-widest uppercase font-semibold text-slate-500">Report ID</div>
+              <div className="font-mono text-sm font-semibold text-slate-900 mt-1">{reportId}</div>
+            </div>
+
+            {loading && <div className="mt-6 text-sm text-slate-500">Verifying…</div>}
+
+            {error && (
+              <Alert variant="danger" className="mt-6 text-left">
+                <div className="font-medium">Verification failed</div>
+                <div className="text-xs mt-1">{error}</div>
+              </Alert>
+            )}
+
+            {data && !error && (
+              <div className="mt-6 text-left space-y-4">
+                {data.exists ? (
+                  <>
+                    <div className="flex items-center justify-center gap-2">
+                      <Badge variant="success" className="gap-1.5"><CheckCircle2 className="h-3.5 w-3.5" /> Valid • Authentic</Badge>
+                      <Badge variant="neutral">v{data.version}</Badge>
+                    </div>
+                    <div className="rounded-xl bg-white border border-slate-200 divide-y divide-slate-100">
+                      <div className="flex items-center justify-between p-3">
+                        <span className="text-xs text-slate-500">Report ID</span>
+                        <span className="font-mono text-xs font-semibold text-slate-900">{data.reportId}</span>
+                      </div>
+                      {data.exam && (
+                        <div className="flex items-center justify-between p-3">
+                          <span className="text-xs text-slate-500">Exam</span>
+                          <span className="text-xs font-medium text-slate-900">{data.exam.title} <span className="text-slate-500">({data.exam.subject})</span></span>
+                        </div>
+                      )}
+                      {data.student && (
+                        <div className="flex items-center justify-between p-3">
+                          <span className="text-xs text-slate-500">Student</span>
+                          <span className="text-xs font-medium text-slate-900">{data.student.name}</span>
+                        </div>
+                      )}
+                      <div className="flex items-center justify-between p-3">
+                        <span className="text-xs text-slate-500">Generated</span>
+                        <span className="text-xs font-medium text-slate-900">{data.generatedAt ? new Date(data.generatedAt).toLocaleDateString("en-IN", { day: "2-digit", month: "long", year: "numeric" }) : "—"}</span>
+                      </div>
+                    </div>
+                    <Alert variant="success" className="text-xs leading-5">
+                      This report was generated by ExamGuard and is authentic. {data.message}
+                    </Alert>
+                    <p className="text-[11px] text-slate-400 text-center">
+                      ExamGuard provides exam-session insights for educational review. Recorded signals should be interpreted in context and do not independently establish misconduct.
+                    </p>
+                  </>
+                ) : (
+                  <div className="text-center">
+                    <Badge variant="danger" className="gap-1.5"><XCircle className="h-3.5 w-3.5" /> Not Found</Badge>
+                    <p className="text-sm text-slate-600 mt-3">Report ID <code>{reportId}</code> could not be verified.</p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            <div className="mt-6 flex items-center justify-center gap-3 text-xs">
+              <Link to="/" className="text-indigo-600 hover:underline font-medium">Back to home</Link>
+              <span className="h-1 w-1 rounded-full bg-slate-300" />
+              <a href="/branding/examguard-logo.svg" target="_blank" rel="noreferrer" className="text-slate-500 hover:text-slate-700 underline">Brand assets</a>
+            </div>
+          </Card>
+
+          <Card className="mt-4 p-4 flex items-center gap-3">
+            <FileText className="h-4 w-4 text-slate-500" />
+            <div className="flex-1 min-w-0">
+              <div className="text-xs font-semibold text-slate-900">Need help?</div>
+              <div className="text-xs text-slate-500">Contact your institution’s examination department. Technology assists teachers — it does not replace human judgment.</div>
+            </div>
+          </Card>
+        </div>
+      </main>
+      <footer className="py-6 text-center text-xs text-slate-400">ExamGuard — Secure Assessment & Integrity Platform • Report verification is for authenticity only and does not disclose private data.</footer>
+    </div>
+  )
+}
